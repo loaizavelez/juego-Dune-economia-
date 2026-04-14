@@ -10,6 +10,10 @@ public class DecreeData : ScriptableObject
     [SerializeField] private string favoredFaction;
     [SerializeField] private int stabilityChange;
 
+
+    public bool IsApplied { get; set; }
+
+
     public string DecreeName => decreeName;
     public string Description => description;
     public int ProductionChange => productionChange;

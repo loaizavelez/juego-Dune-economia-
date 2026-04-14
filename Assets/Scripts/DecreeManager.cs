@@ -9,6 +9,12 @@ public class DecreeManager : MonoBehaviour
 
     public void ApplyDecree(DecreeData decree)
     {
+
+        if (decree.IsApplied)
+        {
+            Debug.Log($"El decreto {decree.DecreeName} ya fue aplicado y no puede repetirse.");
+            return;
+        }
         // Aquí aplicas los efectos del decreto
         Debug.Log($"Aplicando decreto: {decree.DecreeName}");
      
@@ -17,7 +23,7 @@ public class DecreeManager : MonoBehaviour
         stats.ChangeCommunitySupport(decree.CommunitySupportChange);
         stats.ChangeStability(+10);
 
-
+        decree.IsApplied = true;
 
     }
 
