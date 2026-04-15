@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ab598b43a24a6349944c8d352cf5ce9, type: 3}
   m_Name: TierraDeTodos
   m_EditorClassIdentifier: Assembly-CSharp::DecreeData
-  decreeName: 
+  decreeName: Tierra de todos
   description: 
   productionChange: 0
   communitySupportChange: 0
