@@ -9,11 +9,13 @@ public class DecreeData : ScriptableObject
     [SerializeField] private int communitySupportChange;
     [SerializeField] private string favoredFaction;
     [SerializeField] private int stabilityChange;
+    [SerializeField] private bool isApplied;
 
-
-    public bool IsApplied { get; set; }
-
-
+    public bool IsApplied
+    {
+        get => isApplied;
+        set => isApplied = value;
+    }
     public string DecreeName => decreeName;
     public string Description => description;
     public int ProductionChange => productionChange;
