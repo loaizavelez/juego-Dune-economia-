@@ -18,3 +18,4 @@ MonoBehaviour:
   communitySupportChange: 0
   favoredFaction: 
   stabilityChange: 0
+  isApplied: 1
