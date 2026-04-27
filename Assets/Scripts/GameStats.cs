@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class GameStats : MonoBehaviour
 {
@@ -16,6 +17,24 @@ public class GameStats : MonoBehaviour
     public int playerWater = 100; // Agua inicial del jugador
     public int aiWater = 100; // Agua inicial de la IAB
 
+
+    private void Start()
+    {
+        StartCoroutine(RecoleccionDeAgua());
+    }
+
+    IEnumerator RecoleccionDeAgua()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(10f); // cada 10 segundos
+
+            playerWater += 1;
+            aiWater += 1;
+
+            Debug.Log($"Recolección: Jugador = {playerWater}, IA = {aiWater}");
+        }
+    }
     public void AddSpice(int amount)
     {
         Spice += amount;
