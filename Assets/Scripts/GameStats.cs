@@ -12,6 +12,10 @@ public class GameStats : MonoBehaviour
     public float CommunitySupport;
     public float Stability;
 
+    [Header("Player vs AI")]
+    public int playerWater = 100; // Agua inicial del jugador
+    public int aiWater = 100; // Agua inicial de la IAB
+
     public void AddSpice(int amount)
     {
         Spice += amount;

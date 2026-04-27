@@ -8,6 +8,8 @@ public class AIController : MonoBehaviour
     public float interval = 3f; // cada 3 segundos
     private float timer = 0f;
 
+    
+
     private void Start()
     {
         // Esperar un frame para que el GridManager termine de generar las casillas
@@ -78,11 +80,23 @@ public class AIController : MonoBehaviour
                 Casillas vecino = grid.GetCasilla(v.x, v.y);
                 if (vecino != null && vecino.controller == Controller.None)
                 {
-                    vecino.SetController(Controller.AI);
-                    Debug.Log($"IA capturó la casilla ({vecino.x}, {vecino.y})");
+                    // 🔹 Usar TryCapture en lugar de SetController
+                    GameStats stats = grid.stats; // referencia al objeto de stats
+                    bool captured = vecino.TryCapture(Controller.AI, grid, stats);
+
+                    if (captured)
+                    {
+                       // Debug.Log($"IA capturó la casilla ({vecino.x}, {vecino.y})");
+                    }
+                    else
+                    {
+                        //Debug.Log($"IA intentó capturar ({vecino.x}, {vecino.y}) pero no tenía agua suficiente");
+                    }
+
                     break;
                 }
             }
         }
+
     }
 }

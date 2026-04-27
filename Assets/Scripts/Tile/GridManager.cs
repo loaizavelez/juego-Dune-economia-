@@ -6,6 +6,8 @@ public class GridManager : MonoBehaviour
     public int height = 10;  // número de filas
     public GameObject casillaPrefab;
 
+    public GameStats stats; // Referencia a GameStats para actualizar recursos
+
     private Casillas[,] grid;
 
     void Start()
@@ -22,15 +24,32 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                // Instancia en el plano X–Y (2D)
                 GameObject casillaObj = Instantiate(casillaPrefab, new Vector3(x, y, 0), Quaternion.identity);
                 casillaObj.name = $"Casilla {x},{y}";
                 Casillas casilla = casillaObj.GetComponent<Casillas>();
                 casilla.x = x;
                 casilla.y = y;
+
+                // 🔹 Asignar tipo de territorio
+                casilla.TerritoryType = AssignTerritoryType(x, y);
+
                 grid[x, y] = casilla;
             }
         }
+    }
+
+    private string AssignTerritoryType(int x, int y)
+    {
+        int centerX = width / 2;
+        int centerY = height / 2;
+
+        // Ejemplo: centro = Oasis, bordes = Desierto, resto = Llanura
+        if (Mathf.Abs(x - centerX) + Mathf.Abs(y - centerY) < 2)
+            return "Oasis";
+        else if (x == 0 || y == 0 || x == width - 1 || y == height - 1)
+            return "Desert";
+        else
+            return "Plain";
     }
 
     public Casillas GetCasilla(int x, int y)
