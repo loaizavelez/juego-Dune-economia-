@@ -1,42 +1,35 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public enum Controller
+
+
+public enum TerritoryType
 {
-    None,
-    Player,
-    AI
+    Desert,
+    Plains,
+    Oasis,
+    Spice
 }
 
 public class Casillas : MonoBehaviour
 {
     public int x;
     public int y;
-    public string TerritoryType;
 
-    public Controller controller = Controller.None;
+    public TerritoryType territoryType;
 
-    void Start()
-    {
-        // Inicializa el color según el estado del Inspector
-        SetController(controller);
-    }
+    public Controller controller;
 
     // 🔹 Captura con clic directo en la casilla
     void OnMouseDown()
     {
-        GridManager grid = FindObjectOfType<GridManager>();
+        GridManager grid = FindFirstObjectByType<GridManager>();
         GameStats stats = grid.stats;
 
         // Permitir captura inicial si está vacía y es la primera jugada
         if (controller == Controller.None && EsVecinaDeJugador(grid))
         {
-            TryCapture(Controller.Player, grid, stats);
-        }
-        else if (controller == Controller.None && !HayCasillasDelJugador(grid))
-        {
-            // Primera casilla del jugador (ej. inicio de partida)
-            TryCapture(Controller.Player, grid, stats);
+            TryCapture(Controller.Player1, grid, stats);
         }
         else
         {
@@ -52,16 +45,19 @@ public class Casillas : MonoBehaviour
 
         // 🔹 Color base según tipo de terreno
         Color terrainColor = Color.gray;
-        switch (TerritoryType)
+        switch (territoryType)
         {
-            case "Desert":
+            case TerritoryType.Desert:
                 terrainColor = new Color(1f, 0.9f, 0.6f); // arena
                 break;
-            case "Oasis":
+            case TerritoryType.Oasis:
                 terrainColor = Color.green; // vegetación
                 break;
-            case "Plain":
+            case TerritoryType.Plains:
                 terrainColor = Color.yellow; // pradera
+                break;
+            case TerritoryType.Spice:
+                terrainColor = Color.purple;
                 break;
             default:
                 terrainColor = Color.gray; // fallback
@@ -72,10 +68,10 @@ public class Casillas : MonoBehaviour
         Color controllerColor = Color.white;
         switch (controller)
         {
-            case Controller.Player:
+            case Controller.Player1:
                 controllerColor = Color.blue;
                 break;
-            case Controller.AI:
+            case Controller.Player2:
                 controllerColor = Color.red;
                 break;
             case Controller.None:
@@ -92,31 +88,15 @@ public class Casillas : MonoBehaviour
 
         renderer.color = finalColor;
 
-        Debug.Log($"Casilla ({x}, {y}) tipo {TerritoryType} ahora pertenece a {controller} y cambió a color {finalColor}");
+        Debug.Log($"Casilla ({x}, {y}) tipo {territoryType} ahora pertenece a {controller} y cambió a color {finalColor}");
     }
 
-    public int GetWaterCost()
-    {
-        Debug.Log($"Casilla ({x},{y}) tipo: {TerritoryType}");
-
-        switch (TerritoryType)
-        {
-            case "Desert":
-                return 3;
-            case "Oasis":
-                return 1;
-            case "Plain":
-                return 2;
-            default:
-                return 2; // Costo por defecto
-        }
-    }
 
     public bool TryCapture(Controller newController, GridManager grid, GameStats stats)
     {
-        int cost = GetWaterCost();
+        int cost = 1;
 
-        if (newController == Controller.Player)
+        if (newController == Controller.Player1)
         {
             if (stats.playerWater >= cost)
             {
@@ -131,7 +111,7 @@ public class Casillas : MonoBehaviour
                 return false;
             }
         }
-        else if (newController == Controller.AI)
+        else if (newController == Controller.Player2)
         {
             if (stats.aiWater >= cost)
             {
@@ -166,30 +146,13 @@ public class Casillas : MonoBehaviour
             if (v.x >= 0 && v.x < grid.width && v.y >= 0 && v.y < grid.height)
             {
                 Casillas vecino = grid.GetCasilla(v.x, v.y);
-                if (vecino != null && vecino.controller == Controller.Player)
+                if (vecino != null && vecino.controller == Controller.Player1)
                 {
                     return true;
                 }
             }
         }
 
-        return false;
-    }
-
-    // 🔹 Verifica si el jugador ya controla alguna casilla
-    bool HayCasillasDelJugador(GridManager grid)
-    {
-        for (int i = 0; i < grid.width; i++)
-        {
-            for (int j = 0; j < grid.height; j++)
-            {
-                Casillas c = grid.GetCasilla(i, j);
-                if (c != null && c.controller == Controller.Player)
-                {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 }

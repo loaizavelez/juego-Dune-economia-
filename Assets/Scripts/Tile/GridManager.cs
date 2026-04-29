@@ -30,29 +30,26 @@ public class GridManager : MonoBehaviour
                 casilla.x = x;
                 casilla.y = y;
 
-                //Asignar Controlador del territorio
-                casilla.controller = AssignTerritoryOwner(x,y);
-                // 🔹 Asignar tipo de territorio
-                casilla.TerritoryType = AssignTerritoryType(x, y);
                 
+                // 🔹 Asignar tipo de territorio
+                ///casilla.TerritoryType = AssignTerritoryType(x, y);
+                //Asignar Controlador del territorio
+                if (x == width && y == height)
+                {
+                    casilla.SetController(Controller.Player1);
+                }
+                else if (x == 0 && y == 0)
+                {
+                    casilla.SetController(Controller.Player2);
+                }
+                else
+                {
+                    casilla.SetController(Controller.None);
+                }
+
 
                 grid[x, y] = casilla;
             }
-        }
-    }
-
-    private Controller AssignTerritoryOwner(int x, int y)
-    {
-        if (x == width && y == 0){
-            return Controller.Player;
-        }
-        else if (x==0 && y == height)
-        {
-            return Controller.AI;
-        }
-        else
-        {
-            return Controller.None;
         }
     }
 
