@@ -1,41 +1,192 @@
-using System;
-using UnityEditor.UI;
 using UnityEngine;
-
-
 
 public class Tile : MonoBehaviour
 {
-    TileSetManager TSM;
     public Controller controller = Controller.None;
+    public int id;
 
-    public  int cost;
-    public int waterPayout;
+    [SerializeField] Color color;
+    [Header("Grid")]
+    public TileSetManager TSM;
+    public Vector2Int gridPos;
 
-    [SerializeField] Color baseColor;
-    Color color;
-    SpriteRenderer spriteRenderer;
-    public void DrawTile()
+    [Header("Quadrants")]
+    public SpriteRenderer topLeft;
+    public SpriteRenderer topRight;
+    public SpriteRenderer bottomLeft;
+    public SpriteRenderer bottomRight;
+
+    [Header("Sprites")]
+    public SubTiles sprites;
+
+    private void Awake()
     {
+        topLeft.color = color;
+        topRight.color = color;
+        bottomLeft.color = color;
+        bottomRight.color = color;
+    }
+
+    private void Start()
+    {
+        DrawTile();
+    }
+
+    // ----------------------------
+    public void Init(TileSetManager manager, Vector2Int pos)
+    {
+        TSM = manager;
+        gridPos = pos;
+    }
+
+    bool HasNeighbor(Vector2Int dir)
+    {
+        if (TSM == null) return false;
+        return TSM.GetTile(gridPos + dir) != null && TSM.GetTile(gridPos+dir).id == this.id;
+    }
+    void DrawTile()
+    {
+        Color c = color;
         switch (controller)
         {
             case Controller.Player1:
-                color = Color.Lerp(baseColor,TSM.player1Color,0.5f);
+                c = Color.Lerp(color,TSM.player1Color,0.5f);
             break;   
             case Controller.Player2:
-                color = Color.Lerp(baseColor,TSM.player2Color,0.5f);
+                c = Color.Lerp(color,TSM.player2Color,0.5f);
             break;
             case Controller.None:
-                color = baseColor;
+                c = color;
             break;
         }
-        spriteRenderer.color = color;
+        topLeft.color = c;
+        topRight.color = c;
+        bottomLeft.color = c;
+        bottomRight.color = c;
+    }
+    public void UpdateTile()
+    {
+        // Cardinal
+        bool up = HasNeighbor(Vector2Int.up);
+        bool down = HasNeighbor(Vector2Int.down);
+        bool left = HasNeighbor(Vector2Int.left);
+        bool right = HasNeighbor(Vector2Int.right);
+
+        // Diagonals
+        bool upRight = HasNeighbor(new Vector2Int(1, 1));
+        bool upLeft = HasNeighbor(new Vector2Int(-1, 1));
+        bool downRight = HasNeighbor(new Vector2Int(1, -1));
+        bool downLeft = HasNeighbor(new Vector2Int(-1, -1));
+
+        // Filter diagonals
+        if (!up || !right) upRight = false;
+        if (!up || !left) upLeft = false;
+        if (!down || !right) downRight = false;
+        if (!down || !left) downLeft = false;
+
+        topLeft.sprite = GetTopLeft(up, left, upLeft);
+        topRight.sprite = GetTopRight(up, right, upRight);
+        bottomLeft.sprite = GetBottomLeft(down, left, downLeft);
+        bottomRight.sprite = GetBottomRight(down, right, downRight);
     }
 
-    void Start()
+    // ----------------------------
+    // QUADRANTS (directional)
+    // ----------------------------
+
+    Sprite GetTopLeft(bool up, bool left, bool diag)
     {
-        spriteRenderer  = gameObject.GetComponent<SpriteRenderer>();
-        TSM = FindFirstObjectByType<TileSetManager>();
-        DrawTile();
+        if (up && left)
+        {
+            if (diag) return sprites.center;
+            else return sprites.innerCornerTL;
+        }
+
+        if (up) return sprites.edgeLeft;    // ⬅️ Borde izquierdo (vertical)
+        if (left) return sprites.edgeTop;   // ⬅️ Borde superior (horizontal)
+
+        return sprites.outerCornerTL;
+    }
+
+    Sprite GetTopRight(bool up, bool right, bool diag)
+    {
+        if (up && right)
+        {
+            if (diag) return sprites.center;
+            else return sprites.innerCornerTR;
+        }
+
+        if (up) return sprites.edgeRight;   // ⬅️ Borde derecho (vertical)
+        if (right) return sprites.edgeTop;  // ⬅️ Borde superior (horizontal)
+
+        return sprites.outerCornerTR;
+    }
+
+    Sprite GetBottomLeft(bool down, bool left, bool diag)
+    {
+        if (down && left)
+        {
+            if (diag) return sprites.center;
+            else return sprites.innerCornerBL;
+        }
+
+        if (down) return sprites.edgeLeft;    // ⬅️ Borde izquierdo (vertical)
+        if (left) return sprites.edgeBottom;  // ⬅️ Borde inferior (horizontal)
+
+        return sprites.outerCornerBL;
+    }
+
+    Sprite GetBottomRight(bool down, bool right, bool diag)
+    {
+        if (down && right)
+        {
+            if (diag) return sprites.center;
+            else return sprites.innerCornerBR;
+        }
+
+        if (down) return sprites.edgeRight;   // ⬅️ Borde derecho (vertical)
+        if (right) return sprites.edgeBottom; // ⬅️ Borde inferior (horizontal)
+
+        return sprites.outerCornerBR;
+    }
+
+    // ----------------------------
+    public void UpdateNeighbors()
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                Tile t = TSM.GetTile(gridPos + new Vector2Int(x, y));
+                if (t != null)
+                    t.UpdateTile();
+            }
+        }
+    }
+
+    // ----------------------------
+    [System.Serializable]
+    public class SubTiles
+    {
+        [Header("Center")]
+        public Sprite center;
+
+        [Header("Edges")]
+        public Sprite edgeTop;
+        public Sprite edgeBottom;
+        public Sprite edgeLeft;
+        public Sprite edgeRight;
+
+        [Header("Inner Corners")]
+        public Sprite innerCornerTL;
+        public Sprite innerCornerTR;
+        public Sprite innerCornerBL;
+        public Sprite innerCornerBR;
+
+        [Header("Outer Corners")]
+        public Sprite outerCornerTL;
+        public Sprite outerCornerTR;
+        public Sprite outerCornerBL;
+        public Sprite outerCornerBR;
     }
 }

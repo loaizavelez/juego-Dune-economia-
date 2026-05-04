@@ -91,34 +91,59 @@ public class TileSetManager : MonoBehaviour
                     con = Controller.None;
                 }
 
-                GameObject tile = Instantiate(tileType,pos, Quaternion.identity);
-                tile.GetComponent<Tile>().controller = con;
+                GameObject tile = Instantiate(tileType, pos, Quaternion.identity);
+
+                Tile tileScript = tile.GetComponent<Tile>();
+
+                tileScript.Init(this, new Vector2Int(x, y));
+                tileScript.controller = con;
+
                 tile.name = $"{x}{y}";
-                grid[x,y] = tile;
-                
+                grid[x, y] = tile;
+
             }
         }
     }
 
-    void Turno(Player player)
+    void SetGrid()
     {
-        for (int x = 0; x < width ; x++)
+        for (int x = 0; x< width; x++)
         {
-            for (int y = 0 ; y < height; y++)
+            for (int y = 0; y< height; y++)
             {
-                Tile tile = grid[x,y].GetComponent<Tile>();
+                if (grid[x, y] == null) continue;
 
-                if (tile.controller == player.player)
+                Tile tile = grid[x, y].GetComponent<Tile>();
+
+                if (tile != null)
                 {
-                    player.GetWater(tile.waterPayout);
+                    tile.UpdateTile();
                 }
             }
         }
     }
+
+    //void Turno(Player player)
+    //{
+    //    for (int x = 0; x < width ; x++)
+    //    {
+    //        for (int y = 0 ; y < height; y++)
+    //        {
+    //            Tile tile = grid[x,y].GetComponent<Tile>();
+    //
+    //            if (tile.controller == player.player)
+    //            {
+    //                player.GetWater(tile.waterPayout);
+    //            }
+    //        }
+    //    }
+    //}
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         CreateGrid();
+        SetGrid();
+
         plains.SetActive(false);
         dunes.SetActive(false);
         mountains.SetActive(false);
@@ -149,5 +174,14 @@ public class TileSetManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public Tile GetTile(Vector2Int pos)
+    {
+        if (pos.x < 0 || pos.y < 0 || pos.x >= width || pos.y >= height)
+        {
+            return null;
+        }            
+        return grid[pos.x,pos.y].GetComponent<Tile>();
     }
 }
