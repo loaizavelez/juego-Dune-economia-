@@ -20,6 +20,8 @@ public class TileSetManager : MonoBehaviour
 
     [SerializeField] GameObject player1;
     [SerializeField] GameObject player2;
+    int whoIsPlaying;
+    bool activeTurn;
 
     [Header("Tiles")]
     [SerializeField] GameObject plains;
@@ -123,21 +125,24 @@ public class TileSetManager : MonoBehaviour
         }
     }
 
-    //void Turno(Player player)
-    //{
-    //    for (int x = 0; x < width ; x++)
-    //    {
-    //        for (int y = 0 ; y < height; y++)
-    //        {
-    //            Tile tile = grid[x,y].GetComponent<Tile>();
-    //
-    //            if (tile.controller == player.player)
-    //            {
-    //                player.GetWater(tile.waterPayout);
-    //            }
-    //        }
-    //    }
-    //}
+    void InicioTurno(Player player)
+    {
+        for (int x = 0; x < width ; x++)
+        {
+            for (int y = 0 ; y < height; y++)
+            {
+                Tile tile = grid[x,y].GetComponent<Tile>();
+    
+                if (tile.controller == player.player)
+                {
+                    player.GetWater(tile.waterPayout);
+                    player.GetSpice(tile.spicePayout);
+                    player.GetMetals(tile.metalsPayout);
+                }
+            }
+        }
+        activeTurn = true;
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -148,26 +153,59 @@ public class TileSetManager : MonoBehaviour
         dunes.SetActive(false);
         mountains.SetActive(false);
         oasis.SetActive(false);
+
+        player1.GetComponent<Player>().water = 5;
+        player2.GetComponent<Player>().water = 5;
+
+        whoIsPlaying = 1;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0)) { 
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit))
+        if (whoIsPlaying == 1)
+        {
+            
+            InicioTurno(player1.GetComponent<Player>());
+            do
             {
-                if (hit.collider != null){
-                    for (int x = 0; x< width; x++)
+                if (Input.GetMouseButtonDown(0))
+                {
+                    checkTile();
+                }
+            } while (activeTurn);
+            whoIsPlaying = 2;
+        }
+        if (whoIsPlaying == 2)
+        {
+            InicioTurno(player2.GetComponent<Player>());
+            do
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    checkTile();
+                }
+            } while (activeTurn);
+            whoIsPlaying = 1;
+        }
+    }
+
+    void checkTile()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            if (hit.collider != null)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
                     {
-                        for (int y = 0; y < height; y++)
+                        if (grid[x, y] != null)
                         {
-                            if (grid[x,y] != null)
+                            if (hit.collider.gameObject == grid[x, y])
                             {
-                                if (hit.collider.gameObject == grid[x,y])
-                                {
-                                    Debug.Log(grid[x,y].name);
-                                }
+                                Debug.Log(grid[x, y].name);
                             }
                         }
                     }
@@ -183,5 +221,10 @@ public class TileSetManager : MonoBehaviour
             return null;
         }            
         return grid[pos.x,pos.y].GetComponent<Tile>();
+    }
+
+    public void pass()
+    {
+        activeTurn = false;
     }
 }

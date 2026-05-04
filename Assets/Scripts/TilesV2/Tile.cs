@@ -2,10 +2,18 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
+    [Header("Tile Data")]
     public Controller controller = Controller.None;
     public int id;
-
     [SerializeField] Color color;
+
+    [Header("Economy")]
+    public int waterCost;
+    public int waterPayout;
+    public int spicePayout;
+    public int metalsPayout;
+
+    
     [Header("Grid")]
     public TileSetManager TSM;
     public Vector2Int gridPos;
