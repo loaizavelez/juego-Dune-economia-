@@ -125,7 +125,7 @@ public class TileSetManager : MonoBehaviour
         }
     }
 
-    void InicioTurno(Player player)
+    void InicioTurno(GameObject player)
     {
         for (int x = 0; x < width ; x++)
         {
@@ -133,11 +133,11 @@ public class TileSetManager : MonoBehaviour
             {
                 Tile tile = grid[x,y].GetComponent<Tile>();
     
-                if (tile.controller == player.player)
+                if (tile.controller == player.GetComponent<Player>().player)
                 {
-                    player.GetWater(tile.waterPayout);
-                    player.GetSpice(tile.spicePayout);
-                    player.GetMetals(tile.metalsPayout);
+                    player.GetComponent<Player>().GetWater(tile.waterPayout);
+                    player.GetComponent<Player>().GetSpice(tile.spicePayout);
+                    player.GetComponent<Player>().GetMetals(tile.metalsPayout);
                 }
             }
         }
@@ -163,31 +163,7 @@ public class TileSetManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (whoIsPlaying == 1)
-        {
-            
-            InicioTurno(player1.GetComponent<Player>());
-            do
-            {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    checkTile();
-                }
-            } while (activeTurn);
-            whoIsPlaying = 2;
-        }
-        if (whoIsPlaying == 2)
-        {
-            InicioTurno(player2.GetComponent<Player>());
-            do
-            {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    checkTile();
-                }
-            } while (activeTurn);
-            whoIsPlaying = 1;
-        }
+        InicioTurno(player1);
     }
 
     void checkTile()

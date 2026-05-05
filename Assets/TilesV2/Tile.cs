@@ -5,7 +5,6 @@ public class Tile : MonoBehaviour
     [Header("Tile Data")]
     public Controller controller = Controller.None;
     public int id;
-    [SerializeField] Color color;
 
     [Header("Economy")]
     public int waterCost;
@@ -29,10 +28,10 @@ public class Tile : MonoBehaviour
 
     private void Awake()
     {
-        topLeft.color = color;
-        topRight.color = color;
-        bottomLeft.color = color;
-        bottomRight.color = color;
+        topLeft.color = Color.white;
+        topRight.color = Color.white;
+        bottomLeft.color = Color.white;
+        bottomRight.color = Color.white;
     }
 
     private void Start()
@@ -54,17 +53,17 @@ public class Tile : MonoBehaviour
     }
     void DrawTile()
     {
-        Color c = color;
+        Color c = Color.white;
         switch (controller)
         {
             case Controller.Player1:
-                c = Color.Lerp(color,TSM.player1Color,0.5f);
+                c = Color.Lerp(Color.white, TSM.player1Color,0.5f);
             break;   
             case Controller.Player2:
-                c = Color.Lerp(color,TSM.player2Color,0.5f);
+                c = Color.Lerp(Color.white, TSM.player2Color,0.5f);
             break;
             case Controller.None:
-                c = color;
+                c = Color.white;
             break;
         }
         topLeft.color = c;
