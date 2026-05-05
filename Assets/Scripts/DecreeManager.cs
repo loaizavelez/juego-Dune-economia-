@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
+/*
 public class DecreeManager : MonoBehaviour
 {
     [SerializeField] private List<DecreeData> availableDecrees;
@@ -42,3 +43,4 @@ public class DecreeManager : MonoBehaviour
     }
 
 }
+*/

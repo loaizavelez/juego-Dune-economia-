@@ -3,20 +3,35 @@ using System.Collections;
 
 public class GameStats : MonoBehaviour
 {
-    [Header("Resources")]
-    public int Spice;
-    public int Inhabitants;
-    public int Water;
+    [System.Serializable]
+    public class PlayerStats
+    {
+        [Header("Resources")]
+        public int Spice;
+        public int Inhabitants;
+        public int Water;
 
-    [Header("Stats")]
-    public float MilitaryPower;
-    public float CommunitySupport;
-    public float Stability;
+        [Header("Stats")]
+        public float MilitaryPower;
+        public float CommunitySupport;
+        public float Stability;
 
-    [Header("Player vs AI")]
-    public int playerWater = 100; // Agua inicial del jugador
-    public int aiWater = 100; // Agua inicial de la IAB
+        public PlayerStats(int initialWater)
+        {
+            Spice = 0;
+            Inhabitants = 0;
+            Water = initialWater;
+            MilitaryPower = 0f;
+            CommunitySupport = 0f;
+            Stability = 50f; // valor inicial neutro
+        }
+    }
 
+    [Header("Player vs Player")]
+    public PlayerStats player1 = new PlayerStats(100);
+    public PlayerStats player2 = new PlayerStats(100);
+
+    public Controller currentTurn = Controller.Player1;
 
     private void Start()
     {
@@ -27,47 +42,55 @@ public class GameStats : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(10f); // cada 10 segundos
+            yield return new WaitForSeconds(10f);
 
-            playerWater += 1;
-            aiWater += 1;
+            player1.Water += 1;
+            player2.Water += 1;
 
-            Debug.Log($"Recolección: Jugador = {playerWater}, IA = {aiWater}");
+            Debug.Log($"Recolección: Jugador 1 = {player1.Water}, Jugador 2 = {player2.Water}");
         }
     }
-    public void AddSpice(int amount)
+
+    public void ChangeTurn()
     {
-        Spice += amount;
-        Debug.Log($"Spice actualizado: {Spice}");
+        currentTurn = currentTurn == Controller.Player1 ? Controller.Player2 : Controller.Player1;
+        Debug.Log($"Turno cambiado: {currentTurn}");
     }
 
-    public void AddWater(int amount)
+    // 🔹 Métodos para modificar stats de cada jugador
+    public void AddSpice(PlayerStats player, int amount)
     {
-        Water += amount;
-        Debug.Log($"Agua actualizada: {Water}");
+        player.Spice += amount;
+        Debug.Log($"Spice actualizado: {player.Spice}");
     }
 
-    public void ChangeInhabitants(int amount)
+    public void AddWater(PlayerStats player, int amount)
     {
-        Inhabitants = Mathf.Max(Inhabitants + amount, 0);
-        Debug.Log($"Habitantes: {Inhabitants}");
+        player.Water += amount;
+        Debug.Log($"Agua actualizada: {player.Water}");
     }
 
-    public void ChangeMilitaryPower(float amount)
+    public void ChangeInhabitants(PlayerStats player, int amount)
     {
-        MilitaryPower = Mathf.Clamp(MilitaryPower + amount, 0f, 100f);
-        Debug.Log($"Poder militar: {MilitaryPower}");
+        player.Inhabitants = Mathf.Max(player.Inhabitants + amount, 0);
+        Debug.Log($"Habitantes: {player.Inhabitants}");
     }
 
-    public void ChangeCommunitySupport(float amount)
+    public void ChangeMilitaryPower(PlayerStats player, float amount)
     {
-        CommunitySupport = Mathf.Clamp(CommunitySupport + amount, 0f, 100f);
-        Debug.Log($"Apoyo comunitario: {CommunitySupport}");
+        player.MilitaryPower = Mathf.Clamp(player.MilitaryPower + amount, 0f, 100f);
+        Debug.Log($"Poder militar: {player.MilitaryPower}");
     }
 
-    public void ChangeStability(float amount)
+    public void ChangeCommunitySupport(PlayerStats player, float amount)
     {
-        Stability = Mathf.Clamp(Stability + amount, 0f, 100f);
-        Debug.Log($"Estabilidad: {Stability}");
+        player.CommunitySupport = Mathf.Clamp(player.CommunitySupport + amount, 0f, 100f);
+        Debug.Log($"Apoyo comunitario: {player.CommunitySupport}");
+    }
+
+    public void ChangeStability(PlayerStats player, float amount)
+    {
+        player.Stability = Mathf.Clamp(player.Stability + amount, 0f, 100f);
+        Debug.Log($"Estabilidad: {player.Stability}");
     }
 }

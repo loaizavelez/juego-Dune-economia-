@@ -7,7 +7,12 @@ public class TileManager : MonoBehaviour
 
     public void CaptureTiles()
     {
-        int tilesToCapture = Mathf.FloorToInt(stats.CommunitySupport / 20f);
+        // Determinar jugador actual
+        GameStats.PlayerStats jugadorActual =
+            stats.currentTurn == Controller.Player1 ? stats.player1 : stats.player2;
+
+        // Calcular cuántas casillas puede capturar según su apoyo comunitario
+        int tilesToCapture = Mathf.FloorToInt(jugadorActual.CommunitySupport / 20f);
 
         for (int i = 0; i < tilesToCapture && i < tiles.Length; i++)
         {

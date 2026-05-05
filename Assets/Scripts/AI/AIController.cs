@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class AIController : MonoBehaviour
+/*public class AIController : MonoBehaviour
 {
     public GridManager grid;
     public float interval = 3f; // cada 3 segundos
@@ -100,3 +100,4 @@ public class AIController : MonoBehaviour
 
     }
 }
+*/

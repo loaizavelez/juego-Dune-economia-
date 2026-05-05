@@ -4,8 +4,8 @@ using System.Collections.Generic;
 public enum Controller
 {
     None,
-    Player,
-    AI
+    Player1,
+    Player2
 }
 
 public class Casillas : MonoBehaviour
@@ -16,32 +16,73 @@ public class Casillas : MonoBehaviour
 
     public Controller controller = Controller.None;
 
+    // 🔹 Stats específicos de cada casilla
+    public int requiredMilitary;   // poder militar necesario
+    public int waterCost;          // agua necesaria
+    public bool hasSpice;          // indica si hay especia en la casilla
+    public float wormChance;       // probabilidad de gusanos
+
     void Start()
     {
-        // Inicializa el color según el estado del Inspector
-        SetController(controller);
+        InicializarStats();        // asigna stats aleatorios
+        SetController(controller); // pinta la casilla
     }
 
-    // 🔹 Captura con clic directo en la casilla
     void OnMouseDown()
     {
         GridManager grid = FindObjectOfType<GridManager>();
         GameStats stats = grid.stats;
 
-        // Permitir captura inicial si está vacía y es la primera jugada
-        if (controller == Controller.None && EsVecinaDeJugador(grid))
+        Controller jugadorActual = stats.currentTurn;
+
+        if (controller == Controller.None && EsVecinaDeJugador(grid, jugadorActual))
         {
-            TryCapture(Controller.Player, grid, stats);
+            if (TryCapture(jugadorActual, grid, stats))
+            {
+                stats.ChangeTurn();
+            }
         }
-        else if (controller == Controller.None && !HayCasillasDelJugador(grid))
+        else if (controller == Controller.None && !HayCasillasDelJugador(grid, jugadorActual))
         {
-            // Primera casilla del jugador (ej. inicio de partida)
-            TryCapture(Controller.Player, grid, stats);
+            if (TryCapture(jugadorActual, grid, stats))
+            {
+                stats.ChangeTurn();
+            }
         }
         else
         {
-            Debug.Log($"Jugador intentó capturar ({x},{y}) pero no es vecina de ninguna casilla controlada.");
+            Debug.Log($"Jugador {jugadorActual} intentó capturar ({x},{y}) pero no es vecina de ninguna casilla controlada.");
         }
+    }
+
+    void InicializarStats()
+    {
+        switch (TerritoryType)
+        {
+            case "Desert":
+                waterCost = Random.Range(2, 5);
+                requiredMilitary = Random.Range(5, 15);
+                wormChance = 0.3f;
+                break;
+            case "Oasis":
+                waterCost = Random.Range(1, 2);
+                requiredMilitary = Random.Range(1, 5);
+                wormChance = 0.05f;
+                break;
+            case "Plain":
+                waterCost = Random.Range(1, 3);
+                requiredMilitary = Random.Range(3, 10);
+                wormChance = 0.1f;
+                break;
+            default:
+                waterCost = 2;
+                requiredMilitary = 5;
+                wormChance = 0.1f;
+                break;
+        }
+
+        // 🔹 La especia aparece aleatoriamente
+        hasSpice = Random.value < 0.2f; // 20% probabilidad
     }
 
     public void SetController(Controller newController)
@@ -55,16 +96,16 @@ public class Casillas : MonoBehaviour
         switch (TerritoryType)
         {
             case "Desert":
-                terrainColor = new Color(1f, 0.9f, 0.6f); // arena
+                terrainColor = new Color(1f, 0.9f, 0.6f);
                 break;
             case "Oasis":
-                terrainColor = Color.green; // vegetación
+                terrainColor = Color.green;
                 break;
             case "Plain":
-                terrainColor = Color.yellow; // pradera
+                terrainColor = Color.yellow;
                 break;
             default:
-                terrainColor = Color.gray; // fallback
+                terrainColor = Color.gray;
                 break;
         }
 
@@ -72,10 +113,10 @@ public class Casillas : MonoBehaviour
         Color controllerColor = Color.white;
         switch (controller)
         {
-            case Controller.Player:
+            case Controller.Player1:
                 controllerColor = Color.blue;
                 break;
-            case Controller.AI:
+            case Controller.Player2:
                 controllerColor = Color.red;
                 break;
             case Controller.None:
@@ -91,67 +132,44 @@ public class Casillas : MonoBehaviour
         }
 
         renderer.color = finalColor;
-
-        Debug.Log($"Casilla ({x}, {y}) tipo {TerritoryType} ahora pertenece a {controller} y cambió a color {finalColor}");
-    }
-
-    public int GetWaterCost()
-    {
-        Debug.Log($"Casilla ({x},{y}) tipo: {TerritoryType}");
-
-        switch (TerritoryType)
-        {
-            case "Desert":
-                return 3;
-            case "Oasis":
-                return 1;
-            case "Plain":
-                return 2;
-            default:
-                return 2; // Costo por defecto
-        }
     }
 
     public bool TryCapture(Controller newController, GridManager grid, GameStats stats)
     {
-        int cost = GetWaterCost();
+        // Determinar jugador actual
+        GameStats.PlayerStats jugadorActual =
+            newController == Controller.Player1 ? stats.player1 : stats.player2;
 
-        if (newController == Controller.Player)
+        bool suficienteAgua = jugadorActual.Water >= waterCost;
+        bool suficienteMilitar = jugadorActual.MilitaryPower >= requiredMilitary;
+
+        if (suficienteAgua && suficienteMilitar)
         {
-            if (stats.playerWater >= cost)
-            {
-                stats.playerWater -= cost;
-                SetController(newController);
-                Debug.Log($"Jugador capturó ({x},{y}) pagando {cost} agua. Agua restante: {stats.playerWater}");
-                return true;
-            }
-            else
-            {
-                Debug.Log($"Jugador NO tiene agua suficiente. Costo: {cost}, Agua disponible: {stats.playerWater}");
-                return false;
-            }
-        }
-        else if (newController == Controller.AI)
-        {
-            if (stats.aiWater >= cost)
-            {
-                stats.aiWater -= cost;
-                SetController(newController);
-                Debug.Log($"IA capturó ({x},{y}) pagando {cost} agua. Agua restante: {stats.aiWater}");
-                return true;
-            }
-            else
-            {
-                Debug.Log($"IA NO tiene agua suficiente. Costo: {cost}, Agua disponible: {stats.aiWater}");
-                return false;
-            }
+            jugadorActual.Water -= waterCost;
+            SetController(newController);
+
+            if (hasSpice)
+                stats.AddSpice(jugadorActual, Random.Range(1, 5));
+
+            VerificarEventoGusanos();
+            return true;
         }
 
+        Debug.Log($"No se pudo capturar ({x},{y}). Agua o poder militar insuficiente.");
         return false;
     }
 
-    // 🔹 Verifica si esta casilla es vecina de alguna casilla del jugador
-    bool EsVecinaDeJugador(GridManager grid)
+
+    void VerificarEventoGusanos()
+    {
+        if (Random.value < wormChance)
+        {
+            Debug.Log($"⚠️ Gusanos de arena emergen en ({x},{y})!");
+            // Aquí puedes disparar animación, daño o evento especial
+        }
+    }
+
+    bool EsVecinaDeJugador(GridManager grid, Controller jugador)
     {
         List<Vector2Int> vecinos = new List<Vector2Int>()
         {
@@ -166,7 +184,7 @@ public class Casillas : MonoBehaviour
             if (v.x >= 0 && v.x < grid.width && v.y >= 0 && v.y < grid.height)
             {
                 Casillas vecino = grid.GetCasilla(v.x, v.y);
-                if (vecino != null && vecino.controller == Controller.Player)
+                if (vecino != null && vecino.controller == jugador)
                 {
                     return true;
                 }
@@ -176,15 +194,14 @@ public class Casillas : MonoBehaviour
         return false;
     }
 
-    // 🔹 Verifica si el jugador ya controla alguna casilla
-    bool HayCasillasDelJugador(GridManager grid)
+    bool HayCasillasDelJugador(GridManager grid, Controller jugador)
     {
         for (int i = 0; i < grid.width; i++)
         {
             for (int j = 0; j < grid.height; j++)
             {
                 Casillas c = grid.GetCasilla(i, j);
-                if (c != null && c.controller == Controller.Player)
+                if (c != null && c.controller == jugador)
                 {
                     return true;
                 }
