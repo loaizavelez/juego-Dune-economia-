@@ -15,6 +15,10 @@ public class BattleSystem : MonoBehaviour
     [SerializeField] private TMP_Text factionText;
     [SerializeField] private TMP_Text questionText;
 
+    // 🔹 Botones para conversión
+    [SerializeField] private Button convertAttackButton;
+    [SerializeField] private Button convertDefenseButton;
+
     private Casillas targetTile;
 
     // Mostrar popup con stats
@@ -42,32 +46,59 @@ public class BattleSystem : MonoBehaviour
         battlePopup.SetActive(true);
 
         confirmButton.onClick.RemoveAllListeners();
-        confirmButton.onClick.AddListener(() => ResolveBattle(attackerPower, defenderPower));
+        confirmButton.onClick.AddListener(() => ResolveBattle(targetTile, attackerPower, defenderPower));
 
         cancelButton.onClick.RemoveAllListeners();
         cancelButton.onClick.AddListener(() => battlePopup.SetActive(false));
+
+        // 🔹 Configurar conversión de habitantes
+        convertAttackButton.onClick.RemoveAllListeners();
+        convertAttackButton.onClick.AddListener(() => {
+            var jugador = stats.currentTurn == ControllerManager.Controller.Player1 ? stats.player1 : stats.player2;
+            jugador.ConvertInhabitantsToAttack(10); // ejemplo: convertir 10 habitantes
+            attackerText.text = $"Atacante: {jugador.AttackPower:F0}";
+        });
+
+        convertDefenseButton.onClick.RemoveAllListeners();
+        convertDefenseButton.onClick.AddListener(() => {
+            var jugador = stats.currentTurn == ControllerManager.Controller.Player1 ? stats.player1 : stats.player2;
+            jugador.ConvertInhabitantsToDefense(10); // ejemplo: convertir 10 habitantes
+            defenderText.text = $"Defensor: {jugador.DefensePower:F0}";
+        });
     }
 
     // Resolver batalla
-    private void ResolveBattle(float attackerPower, float defenderPower)
+    private void ResolveBattle(Casillas tile, float attackerPower, float defenderPower)
     {
         var atacante = stats.currentTurn == ControllerManager.Controller.Player1 ? stats.player1 : stats.player2;
+        var defensor = tile.controller == ControllerManager.Controller.Player1 ? stats.player1 : stats.player2;
 
         if (attackerPower >= defenderPower)
         {
-            targetTile.controller = stats.currentTurn;
-            targetTile.ActualizarColor();
-            Debug.Log("¡Territorio capturado con éxito!");
+            tile.TryCapture(stats.currentTurn); // asegúrate de que TryCapture sea PUBLIC en Casillas.cs
+            stats.ConsumeMove();
+
+            atacante.AttackPower -= 1;
+            defensor.DefensePower -= 2;
+
+            atacante.Inhabitants -= 10;
+            defensor.Inhabitants -= 15;
+
+            Debug.Log("El atacante ganó. Se redujeron AttackPower, DefensePower e Inhabitants.");
         }
         else
         {
-            atacante.Stability -= 2f; // penalización
-            Debug.Log("El ataque falló, pierdes estabilidad.");
+            stats.ConsumeMove();
+
+            atacante.AttackPower -= 3;
+            defensor.DefensePower -= 1;
+
+            atacante.Inhabitants -= 20;
+            defensor.Inhabitants -= 5;
+
+            Debug.Log("El atacante perdió. Se redujeron AttackPower, DefensePower e Inhabitants.");
         }
 
         battlePopup.SetActive(false);
-        stats.ConsumeMove(); // consumir movimiento tras la batalla
     }
-
-   
 }

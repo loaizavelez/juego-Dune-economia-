@@ -80,7 +80,7 @@ public class Casillas : MonoBehaviour
             Debug.Log($"Jugador {jugadorActual} intentó capturar ({x},{y}) pero no es vecina de ninguna casilla controlada.");
         }
     }
-    private bool TryCapture(ControllerManager.Controller jugador)
+    public bool TryCapture(ControllerManager.Controller jugador)
     {
         controller = jugador;
         ActualizarColor();
