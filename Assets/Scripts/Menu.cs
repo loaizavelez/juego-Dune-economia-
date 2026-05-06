@@ -1,67 +1,63 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using UnityEngine.SceneManagement;
 
-public class Menu : MonoBehaviour
+public class MenuMain : MonoBehaviour
 {
+    [SerializeField] private GameObject mainPanel;
+    [SerializeField] private GameObject instructionsPage1;
+    [SerializeField] private GameObject instructionsPage2;
+
     [SerializeField] private Button playButton;
     [SerializeField] private Button instructionsButton;
     [SerializeField] private Button exitButton;
-    [SerializeField] private Button backButton;
 
-    [SerializeField] private GameObject instructionsPanel;
-    [SerializeField] private GameObject mainPanel;
-    [SerializeField] private TMP_Text instructionsText;
+    [SerializeField] private Button nextButton;
+    [SerializeField] private Button prevButton;
+    [SerializeField] private Button backButtonPage1;
+    [SerializeField] private Button backButtonPage2;
 
     private void Start()
     {
-        instructionsText.text =
-        "📖 Instrucciones\n\n" +
-        "⚔️ Facciones:\n" +
-        "- Fremen: Menor ataque, mayor defensa y menor consumo de agua.\n" +
-        "- Harkonnen: Mayor ataque, menor defensa y consumo estándar de agua.\n" +
-        "- Cada jugador elige su facción al inicio de la partida.\n\n" +
-        "💧 Agua:\n" +
-        "- Cada habitante necesita agua para sobrevivir.\n" +
-        "- Si hay suficiente agua, la población crece.\n" +
-        "- Si falta agua, la población disminuye.\n" +
-        "- El consumo depende de la facción elegida.\n\n" +
-        "⚔️ Combate:\n" +
-        "- Los habitantes pueden convertirse en poder de ataque o defensa.\n" +
-        "- El resultado depende de los stats de cada facción.\n" +
-        "- La estrategia está en equilibrar población, agua y poder militar.\n\n" +
-        "🎮 Cómo Jugar:\n" +
-        "1. En el menú de facción, cada jugador elige su bando.\n" +
-        "2. Durante la partida, cada jugador tiene 3 movimientos por turno.\n" +
-        "3. Usa tus movimientos para recolectar recursos, convertir habitantes en poder militar o defender tu comunidad.\n" +
-        "4. Vigila el agua: sin ella, tu población disminuirá.\n" +
-        "5. El objetivo es mantener tu facción estable y derrotar al rival en combate.";
-
-
-        playButton.onClick.AddListener(PlayGame);
-        instructionsButton.onClick.AddListener(ShowInstructions);
-        exitButton.onClick.AddListener(ExitGame);
-        backButton.onClick.AddListener(BackToMenu);
-
-        instructionsPanel.SetActive(false);
+        // Estado inicial
         mainPanel.SetActive(true);
+        instructionsPage1.SetActive(false);
+        instructionsPage2.SetActive(false);
+
+        // Botones principales
+        playButton.onClick.AddListener(PlayGame);
+        instructionsButton.onClick.AddListener(ShowPage1);
+        exitButton.onClick.AddListener(ExitGame);
+
+        // Botones de navegación
+        nextButton.onClick.AddListener(ShowPage2);
+        prevButton.onClick.AddListener(ShowPage1);
+        backButtonPage1.onClick.AddListener(BackToMenu);
+        backButtonPage2.onClick.AddListener(BackToMenu);
     }
 
     private void PlayGame()
     {
-        SceneManager.LoadScene("FactionSelectScene"); // 🔹 va al menú de facción
+        SceneManager.LoadScene("FactionSelection");
     }
 
-    private void ShowInstructions()
+    private void ShowPage1()
     {
         mainPanel.SetActive(false);
-        instructionsPanel.SetActive(true);
+        instructionsPage1.SetActive(true);
+        instructionsPage2.SetActive(false);
+    }
+
+    private void ShowPage2()
+    {
+        instructionsPage1.SetActive(false);
+        instructionsPage2.SetActive(true);
     }
 
     private void BackToMenu()
     {
-        instructionsPanel.SetActive(false);
+        instructionsPage1.SetActive(false);
+        instructionsPage2.SetActive(false);
         mainPanel.SetActive(true);
     }
 

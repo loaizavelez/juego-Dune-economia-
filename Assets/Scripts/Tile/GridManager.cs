@@ -10,10 +10,16 @@ public class GridManager : MonoBehaviour
 
     private Casillas[,] grid;
 
+    // 🔹 Propiedades para conteo de territorios
+    public int Player1Territories { get; private set; }
+    public int Player2Territories { get; private set; }
+    public int TotalTerritories { get; private set; }
+
     void Start()
     {
         GenerateGrid();
         CenterCamera();
+        TotalTerritories = width * height;
     }
 
     void GenerateGrid()
@@ -33,6 +39,10 @@ public class GridManager : MonoBehaviour
                 // 🔹 Asignar tipo de territorio
                 casilla.TerritoryType = AssignTerritoryType(x, y);
 
+                // 🔹 Inicialmente sin dueño
+                casilla.controller = ControllerManager.Controller.None;
+                casilla.ActualizarColor();
+
                 grid[x, y] = casilla;
             }
         }
@@ -43,7 +53,6 @@ public class GridManager : MonoBehaviour
         int centerX = width / 2;
         int centerY = height / 2;
 
-        // Ejemplo: centro = Oasis, bordes = Desierto, resto = Llanura
         if (Mathf.Abs(x - centerX) + Mathf.Abs(y - centerY) < 2)
             return "Oasis";
         else if (x == 0 || y == 0 || x == width - 1 || y == height - 1)
@@ -60,20 +69,29 @@ public class GridManager : MonoBehaviour
     void CenterCamera()
     {
         Camera cam = Camera.main;
-        // Colocar la cámara en el centro del tablero
         cam.transform.position = new Vector3(width / 2f, height / 2f, -10);
 
-        // Ajustar el tamaño ortográfico para que se vean todas las casillas
         float aspectRatio = (float)Screen.width / Screen.height;
         float gridRatio = (float)width / height;
 
         if (gridRatio > aspectRatio)
-        {
             cam.orthographicSize = width / 2f / aspectRatio;
-        }
         else
-        {
             cam.orthographicSize = height / 2f;
+    }
+
+    // 🔹 Método para actualizar conteo de territorios
+    public void UpdateTerritoryCounts()
+    {
+        Player1Territories = 0;
+        Player2Territories = 0;
+
+        foreach (Casillas casilla in grid)
+        {
+            if (casilla.controller == ControllerManager.Controller.Player1)
+                Player1Territories++;
+            else if (casilla.controller == ControllerManager.Controller.Player2)
+                Player2Territories++;
         }
     }
 }

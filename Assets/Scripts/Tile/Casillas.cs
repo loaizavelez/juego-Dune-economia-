@@ -16,33 +16,11 @@ public class Casillas : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         stats = FindObjectOfType<GameStats>();
-
-        // ✅ color inicial según tipo de terreno
-        Color terrenoColor = Color.gray;
-        switch (TerritoryType)
-        {
-            case "Desert":
-                terrenoColor = new Color(1f, 0.9f, 0.6f); // arena
-                break;
-            case "Oasis":
-                terrenoColor = Color.green; // vegetación
-                break;
-            case "Plain":
-                terrenoColor = Color.yellow; // pradera
-                break;
-            default:
-                terrenoColor = Color.gray; // fallback
-                break;
-        }
-
-        spriteRenderer.color = terrenoColor;
+        ActualizarColor(); // ✅ color inicial según terreno y dueño
     }
-
-
 
     void OnMouseDown()
     {
-
         ControllerManager.Controller jugadorActual = stats.currentTurn;
 
         // Validar que queden movimientos
@@ -56,30 +34,27 @@ public class Casillas : MonoBehaviour
         if (controller != ControllerManager.Controller.None && controller != jugadorActual)
         {
             FindObjectOfType<BattleSystem>().ShowBattlePopup(this);
-            return; // ✅ salimos para no ejecutar la captura normal
+            return;
         }
 
         // Caso 1: casilla vacía y vecina
         if (controller == ControllerManager.Controller.None && EsVecinaDeJugador(jugadorActual))
         {
             if (TryCapture(jugadorActual))
-            {
-                stats.ConsumeMove(); // ✅ consumir movimiento
-            }
+                stats.ConsumeMove();
         }
         // Caso 2: primera casilla del jugador (no necesita vecinos)
         else if (controller == ControllerManager.Controller.None && !HayCasillasDelJugador(jugadorActual))
         {
             if (TryCapture(jugadorActual))
-            {
-                stats.ConsumeMove(); // ✅ consumir movimiento
-            }
+                stats.ConsumeMove();
         }
         else
         {
             Debug.Log($"Jugador {jugadorActual} intentó capturar ({x},{y}) pero no es vecina de ninguna casilla controlada.");
         }
     }
+
     public bool TryCapture(ControllerManager.Controller jugador)
     {
         controller = jugador;
@@ -118,14 +93,12 @@ public class Casillas : MonoBehaviour
     private bool EsVecinaDeJugador(ControllerManager.Controller jugador)
     {
         GridManager grid = FindObjectOfType<GridManager>();
-
-        // ✅ lista de direcciones como vectores
         Vector2Int[] direcciones = {
-        new Vector2Int(1, 0),
-        new Vector2Int(-1, 0),
-        new Vector2Int(0, 1),
-        new Vector2Int(0, -1)
-    };
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1)
+        };
 
         foreach (var dir in direcciones)
         {
@@ -136,9 +109,7 @@ public class Casillas : MonoBehaviour
             {
                 Casillas vecina = grid.GetCasilla(nx, ny);
                 if (vecina.controller == jugador)
-                {
                     return true;
-                }
             }
         }
         return false;
@@ -153,9 +124,7 @@ public class Casillas : MonoBehaviour
             for (int j = 0; j < grid.height; j++)
             {
                 if (grid.GetCasilla(i, j).controller == jugador)
-                {
                     return true;
-                }
             }
         }
         return false;
@@ -186,9 +155,7 @@ public class Casillas : MonoBehaviour
         // mezcla terreno + jugador
         Color finalColor = terrenoColor;
         if (controller != ControllerManager.Controller.None)
-        {
             finalColor = Color.Lerp(terrenoColor, jugadorColor, 0.5f);
-        }
 
         spriteRenderer.color = finalColor;
     }

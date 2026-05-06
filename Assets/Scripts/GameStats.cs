@@ -37,24 +37,23 @@ public class GameStats : MonoBehaviour
             switch (faction)
             {
                 case Faction.Fremen:
-                    AttackPower = 8;   // menos ataque
-                    DefensePower = 12; // más defensa
+                    AttackPower = 8;
+                    DefensePower = 12;
                     CommunitySupport = 20;
                     Stability = 60;
-                    waterConsumptionRate = 0.3f; // menor consumo de agua por habitante
+                    waterConsumptionRate = 0.3f;
                     break;
 
                 case Faction.Harkonnen:
-                    AttackPower = 12;  // más ataque
-                    DefensePower = 8;  // menos defensa
+                    AttackPower = 12;
+                    DefensePower = 8;
                     CommunitySupport = 10;
                     Stability = 40;
-                    waterConsumptionRate = 0.5f; // consumo estándar de agua por habitante
+                    waterConsumptionRate = 0.5f;
                     break;
             }
         }
 
-        // 🔹 Convertir habitantes en ataque
         public void ConvertInhabitantsToAttack(int amount)
         {
             if (Inhabitants >= amount)
@@ -63,13 +62,8 @@ public class GameStats : MonoBehaviour
                 AttackPower += amount;
                 Debug.Log($"[{faction}] Convertidos {amount} habitantes en AttackPower. Nuevo AttackPower: {AttackPower}, Inhabitants: {Inhabitants}");
             }
-            else
-            {
-                Debug.Log($"[{faction}] No hay suficientes habitantes para convertir en AttackPower.");
-            }
         }
 
-        // 🔹 Convertir habitantes en defensa
         public void ConvertInhabitantsToDefense(int amount)
         {
             if (Inhabitants >= amount)
@@ -77,10 +71,6 @@ public class GameStats : MonoBehaviour
                 Inhabitants -= amount;
                 DefensePower += amount;
                 Debug.Log($"[{faction}] Convertidos {amount} habitantes en DefensePower. Nuevo DefensePower: {DefensePower}, Inhabitants: {Inhabitants}");
-            }
-            else
-            {
-                Debug.Log($"[{faction}] No hay suficientes habitantes para convertir en DefensePower.");
             }
         }
     }
@@ -94,9 +84,12 @@ public class GameStats : MonoBehaviour
     public int movesRemaining = 3;
     public int turnCounter = 1;
 
+    [Header("Referencias externas")]
+    public GridManager gridManager;
+    public VictoryCondition victoryManager;
+
     private void Start()
     {
-        // 🔹 Ejemplo: selección inicial de facción (puedes reemplazar con menú de selección)
         player1 = new PlayerStats(FactionSelectionUI.player1Faction, 100);
         player2 = new PlayerStats(FactionSelectionUI.player2Faction, 100);
 
@@ -107,13 +100,11 @@ public class GameStats : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(30f); // cada 30 segundos
+            yield return new WaitForSeconds(30f);
 
-            // 🔹 Recolección de agua
             player1.Water += 1;
             player2.Water += 1;
 
-            // 🔹 Ajuste de población según agua
             UpdatePopulation(player1);
             UpdatePopulation(player2);
 
@@ -121,24 +112,22 @@ public class GameStats : MonoBehaviour
         }
     }
 
-    // 🔹 Balance de población según agua
     public void UpdatePopulation(PlayerStats player)
     {
         float requiredWater = player.Inhabitants * player.waterConsumptionRate;
 
         if (player.Water >= requiredWater)
         {
-            player.Inhabitants += 5; // población crece
+            player.Inhabitants += 5;
             Debug.Log($"[{player.faction}] Población aumentó. Habitantes: {player.Inhabitants}, Agua: {player.Water}");
         }
         else
         {
-            player.Inhabitants = Mathf.Max(player.Inhabitants - 5, 0); // población decrece
+            player.Inhabitants = Mathf.Max(player.Inhabitants - 5, 0);
             Debug.Log($"[{player.faction}] Población disminuyó. Habitantes: {player.Inhabitants}, Agua: {player.Water}");
         }
     }
 
-    // 🔹 Consumir movimiento
     public void ConsumeMove()
     {
         movesRemaining--;
@@ -150,7 +139,6 @@ public class GameStats : MonoBehaviour
         }
     }
 
-    // 🔹 Cambiar turno
     public void ChangeTurn()
     {
         currentTurn = (currentTurn == ControllerManager.Controller.Player1) ? ControllerManager.Controller.Player2 : ControllerManager.Controller.Player1;
@@ -158,13 +146,21 @@ public class GameStats : MonoBehaviour
         turnCounter++;
 
         Debug.Log($"➡️ Cambio de turno. Ahora juega: {currentTurn}. Turno global: {turnCounter}");
+
+        // ✅ Actualizar conteo de territorios antes de revisar victoria
+        gridManager.UpdateTerritoryCounts();
+
+        // ✅ Revisar condiciones de victoria con los valores correctos
+        victoryManager.CheckVictoryCondition(
+            gridManager.Player1Territories,
+            gridManager.Player2Territories,
+            gridManager.TotalTerritories
+        );
     }
 
-    // 🔹 Métodos auxiliares para HUD
     public int GetMovesRemaining() => movesRemaining;
     public int GetTurnCounter() => turnCounter;
 
-    // 🔹 Métodos para modificar stats de cada jugador
     public void AddSpice(PlayerStats player, int amount)
     {
         player.Spice += amount;
