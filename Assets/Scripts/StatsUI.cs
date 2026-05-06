@@ -23,6 +23,7 @@ public class StatsUI : MonoBehaviour
     [SerializeField] private TMP_Text militarText;
     [SerializeField] private TMP_Text comunidadText;
     [SerializeField] private TMP_Text estabilidadText;
+    [SerializeField] private TMP_Text defenseText;
 
     private bool visible = false;
 
@@ -39,24 +40,25 @@ public class StatsUI : MonoBehaviour
 
         // Jugador actual
         GameStats.PlayerStats jugador =
-            stats.currentTurn == Controller.Player1 ? stats.player1 : stats.player2;
+            stats.currentTurn == ControllerManager.Controller.Player1 ? stats.player1 : stats.player2;
 
         // Actualizar textos
         especiaText.text = "Especia: " + jugador.Spice;
         aguaText.text = "Agua: " + jugador.Water;
         habitantesText.text = "Habitantes: " + jugador.Inhabitants;
-        militarText.text = "Militar: " + jugador.MilitaryPower;
+        militarText.text = "Militar: " + jugador.AttackPower;
+        defenseText.text = "Defensa: " + jugador.DefensePower;  
         comunidadText.text = "Comunidad: " + jugador.CommunitySupport;
         estabilidadText.text = "Estabilidad: " + jugador.Stability;
 
         // Fondo y turno
-        if (stats.currentTurn == Controller.Player1)
+        if (stats.currentTurn == ControllerManager.Controller.Player1)
         {
             turnoText.text = "Turno: Fremen";
             turnoText.color = Color.cyan;
             fondoImage.sprite = fremenSprite;
         }
-        else if (stats.currentTurn == Controller.Player2)
+        else if (stats.currentTurn == ControllerManager.Controller.Player2)
         {
             turnoText.text = "Turno: Harkonnen";
             turnoText.color = Color.red;

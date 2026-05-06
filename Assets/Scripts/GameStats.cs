@@ -7,12 +7,14 @@ public class GameStats : MonoBehaviour
     public class PlayerStats
     {
         [Header("Resources")]
-        public int Spice;
-        public int Inhabitants;
-        public int Water;
+        public float Spice;
+        public float Inhabitants;
+        public float Water;
 
         [Header("Stats")]
-        public float MilitaryPower;
+        public float AttackPower;
+        public float DefensePower;
+       // public float MilitaryPower;
         public float CommunitySupport;
         public float Stability;
 
@@ -21,7 +23,7 @@ public class GameStats : MonoBehaviour
             Spice = 0;
             Inhabitants = 0;
             Water = initialWater;
-            MilitaryPower = 0f;
+           // MilitaryPower = 0f;
             CommunitySupport = 0f;
             Stability = 50f; // valor inicial neutro
         }
@@ -31,7 +33,11 @@ public class GameStats : MonoBehaviour
     public PlayerStats player1 = new PlayerStats(100);
     public PlayerStats player2 = new PlayerStats(100);
 
-    public Controller currentTurn = Controller.Player1;
+    public ControllerManager.Controller currentTurn = ControllerManager.Controller.Player1;
+
+    // 🔹 Nuevo: sistema de movimientos y contador de turnos
+    public int movesRemaining = 3;
+    public int turnCounter = 1;
 
     private void Start()
     {
@@ -51,11 +57,31 @@ public class GameStats : MonoBehaviour
         }
     }
 
+    // 🔹 Consumir movimiento
+    public void ConsumeMove()
+    {
+        movesRemaining--;
+        Debug.Log($"Movimientos restantes: {movesRemaining}");
+
+        if (movesRemaining <= 0)
+        {
+            ChangeTurn();
+        }
+    }
+
+    // 🔹 Cambiar turno
     public void ChangeTurn()
     {
-        currentTurn = currentTurn == Controller.Player1 ? Controller.Player2 : Controller.Player1;
-        Debug.Log($"Turno cambiado: {currentTurn}");
+        currentTurn = (currentTurn == ControllerManager.Controller.Player1) ? ControllerManager.Controller.Player2 : ControllerManager.Controller.Player1;
+        movesRemaining = 3;
+        turnCounter++;
+
+        Debug.Log($"➡️ Cambio de turno. Ahora juega: {currentTurn}. Turno global: {turnCounter}");
     }
+
+    // 🔹 Métodos auxiliares para HUD
+    public int GetMovesRemaining() => movesRemaining;
+    public int GetTurnCounter() => turnCounter;
 
     // 🔹 Métodos para modificar stats de cada jugador
     public void AddSpice(PlayerStats player, int amount)
@@ -76,11 +102,11 @@ public class GameStats : MonoBehaviour
         Debug.Log($"Habitantes: {player.Inhabitants}");
     }
 
-    public void ChangeMilitaryPower(PlayerStats player, float amount)
+   /* public void ChangeMilitaryPower(PlayerStats player, float amount)
     {
         player.MilitaryPower = Mathf.Clamp(player.MilitaryPower + amount, 0f, 100f);
         Debug.Log($"Poder militar: {player.MilitaryPower}");
-    }
+    }*/
 
     public void ChangeCommunitySupport(PlayerStats player, float amount)
     {

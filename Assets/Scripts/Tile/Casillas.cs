@@ -1,52 +1,78 @@
 using UnityEngine;
-using System.Collections.Generic;
-
-public enum Controller
-{
-    None,
-    Player1,
-    Player2
-}
+using UnityEngine.InputSystem.XR;
 
 public class Casillas : MonoBehaviour
 {
     public int x;
     public int y;
+    public ControllerManager.Controller controller = ControllerManager.Controller.None;
+
+    private SpriteRenderer spriteRenderer;
+    private GameStats stats;
+
     public string TerritoryType;
-
-    public Controller controller = Controller.None;
-
-    // 🔹 Stats específicos de cada casilla
-    public int requiredMilitary;   // poder militar necesario
-    public int waterCost;          // agua necesaria
-    public bool hasSpice;          // indica si hay especia en la casilla
-    public float wormChance;       // probabilidad de gusanos
 
     void Start()
     {
-        InicializarStats();        // asigna stats aleatorios
-        SetController(controller); // pinta la casilla
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        stats = FindObjectOfType<GameStats>();
+
+        // ✅ color inicial según tipo de terreno
+        Color terrenoColor = Color.gray;
+        switch (TerritoryType)
+        {
+            case "Desert":
+                terrenoColor = new Color(1f, 0.9f, 0.6f); // arena
+                break;
+            case "Oasis":
+                terrenoColor = Color.green; // vegetación
+                break;
+            case "Plain":
+                terrenoColor = Color.yellow; // pradera
+                break;
+            default:
+                terrenoColor = Color.gray; // fallback
+                break;
+        }
+
+        spriteRenderer.color = terrenoColor;
     }
+
+
 
     void OnMouseDown()
     {
-        GridManager grid = FindObjectOfType<GridManager>();
-        GameStats stats = grid.stats;
 
-        Controller jugadorActual = stats.currentTurn;
+        ControllerManager.Controller jugadorActual = stats.currentTurn;
 
-        if (controller == Controller.None && EsVecinaDeJugador(grid, jugadorActual))
+        // Validar que queden movimientos
+        if (stats.movesRemaining <= 0)
         {
-            if (TryCapture(jugadorActual, grid, stats))
+            Debug.Log("No quedan movimientos en este turno.");
+            return;
+        }
+
+        // Caso 0: casilla enemiga → abrir popup de batalla
+        if (controller != ControllerManager.Controller.None && controller != jugadorActual)
+        {
+            FindObjectOfType<BattleSystem>().ShowBattlePopup(this);
+            return; // ✅ salimos para no ejecutar la captura normal
+        }
+
+        // Caso 1: casilla vacía y vecina
+        if (controller == ControllerManager.Controller.None && EsVecinaDeJugador(jugadorActual))
+        {
+            if (TryCapture(jugadorActual))
             {
-                stats.ChangeTurn();
+                stats.ConsumeMove(); // ✅ consumir movimiento
             }
         }
-        else if (controller == Controller.None && !HayCasillasDelJugador(grid, jugadorActual))
+        // Caso 2: primera casilla del jugador (no necesita vecinos)
+        else if (controller == ControllerManager.Controller.None && !HayCasillasDelJugador(jugadorActual))
         {
-            if (TryCapture(jugadorActual, grid, stats))
+            if (TryCapture(jugadorActual))
             {
-                stats.ChangeTurn();
+                stats.ConsumeMove(); // ✅ consumir movimiento
             }
         }
         else
@@ -54,159 +80,116 @@ public class Casillas : MonoBehaviour
             Debug.Log($"Jugador {jugadorActual} intentó capturar ({x},{y}) pero no es vecina de ninguna casilla controlada.");
         }
     }
-
-    void InicializarStats()
+    private bool TryCapture(ControllerManager.Controller jugador)
     {
+        controller = jugador;
+        ActualizarColor();
+
+        GameStats.PlayerStats statsJugador =
+            jugador == ControllerManager.Controller.Player1 ? stats.player1 : stats.player2;
+
         switch (TerritoryType)
         {
-            case "Desert":
-                waterCost = Random.Range(2, 5);
-                requiredMilitary = Random.Range(5, 15);
-                wormChance = 0.3f;
-                break;
             case "Oasis":
-                waterCost = Random.Range(1, 2);
-                requiredMilitary = Random.Range(1, 5);
-                wormChance = 0.05f;
+                statsJugador.Water += 10;
+                statsJugador.Stability += 10;
+                statsJugador.Inhabitants += 5;
                 break;
-            case "Plain":
-                waterCost = Random.Range(1, 3);
-                requiredMilitary = Random.Range(3, 10);
-                wormChance = 0.1f;
-                break;
-            default:
-                waterCost = 2;
-                requiredMilitary = 5;
-                wormChance = 0.1f;
-                break;
-        }
 
-        // 🔹 La especia aparece aleatoriamente
-        hasSpice = Random.value < 0.2f; // 20% probabilidad
-    }
-
-    public void SetController(Controller newController)
-    {
-        controller = newController;
-
-        var renderer = GetComponent<SpriteRenderer>();
-
-        // 🔹 Color base según tipo de terreno
-        Color terrainColor = Color.gray;
-        switch (TerritoryType)
-        {
             case "Desert":
-                terrainColor = new Color(1f, 0.9f, 0.6f);
+                statsJugador.Water -= 5;
+                statsJugador.Stability -= 5;
+                statsJugador.Spice += 2;
+                statsJugador.Inhabitants -= 6;
                 break;
-            case "Oasis":
-                terrainColor = Color.green;
-                break;
+
             case "Plain":
-                terrainColor = Color.yellow;
-                break;
-            default:
-                terrainColor = Color.gray;
-                break;
-        }
-
-        // 🔹 Color del controlador
-        Color controllerColor = Color.white;
-        switch (controller)
-        {
-            case Controller.Player1:
-                controllerColor = Color.blue;
-                break;
-            case Controller.Player2:
-                controllerColor = Color.red;
-                break;
-            case Controller.None:
-                controllerColor = Color.white;
+                statsJugador.Water -= 5;
+                statsJugador.Stability -= 5;
+                statsJugador.Spice += 1;
+                statsJugador.Inhabitants -= 7;
                 break;
         }
 
-        // 🔹 Mezclar terreno + controlador
-        Color finalColor = terrainColor;
-        if (controller != Controller.None)
-        {
-            finalColor = Color.Lerp(terrainColor, controllerColor, 0.5f);
-        }
-
-        renderer.color = finalColor;
+        Debug.Log($"Casilla ({x},{y}) capturada por {jugador} ({TerritoryType})");
+        return true;
     }
 
-    public bool TryCapture(Controller newController, GridManager grid, GameStats stats)
+    private bool EsVecinaDeJugador(ControllerManager.Controller jugador)
     {
-        // Determinar jugador actual
-        GameStats.PlayerStats jugadorActual =
-            newController == Controller.Player1 ? stats.player1 : stats.player2;
+        GridManager grid = FindObjectOfType<GridManager>();
 
-        bool suficienteAgua = jugadorActual.Water >= waterCost;
-        bool suficienteMilitar = jugadorActual.MilitaryPower >= requiredMilitary;
+        // ✅ lista de direcciones como vectores
+        Vector2Int[] direcciones = {
+        new Vector2Int(1, 0),
+        new Vector2Int(-1, 0),
+        new Vector2Int(0, 1),
+        new Vector2Int(0, -1)
+    };
 
-        if (suficienteAgua && suficienteMilitar)
+        foreach (var dir in direcciones)
         {
-            jugadorActual.Water -= waterCost;
-            SetController(newController);
+            int nx = x + dir.x;
+            int ny = y + dir.y;
 
-            if (hasSpice)
-                stats.AddSpice(jugadorActual, Random.Range(1, 5));
-
-            VerificarEventoGusanos();
-            return true;
-        }
-
-        Debug.Log($"No se pudo capturar ({x},{y}). Agua o poder militar insuficiente.");
-        return false;
-    }
-
-
-    void VerificarEventoGusanos()
-    {
-        if (Random.value < wormChance)
-        {
-            Debug.Log($"⚠️ Gusanos de arena emergen en ({x},{y})!");
-            // Aquí puedes disparar animación, daño o evento especial
-        }
-    }
-
-    bool EsVecinaDeJugador(GridManager grid, Controller jugador)
-    {
-        List<Vector2Int> vecinos = new List<Vector2Int>()
-        {
-            new Vector2Int(x+1, y),
-            new Vector2Int(x-1, y),
-            new Vector2Int(x, y+1),
-            new Vector2Int(x, y-1)
-        };
-
-        foreach (var v in vecinos)
-        {
-            if (v.x >= 0 && v.x < grid.width && v.y >= 0 && v.y < grid.height)
+            if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height)
             {
-                Casillas vecino = grid.GetCasilla(v.x, v.y);
-                if (vecino != null && vecino.controller == jugador)
+                Casillas vecina = grid.GetCasilla(nx, ny);
+                if (vecina.controller == jugador)
                 {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
-    bool HayCasillasDelJugador(GridManager grid, Controller jugador)
+    private bool HayCasillasDelJugador(ControllerManager.Controller jugador)
     {
+        GridManager grid = FindObjectOfType<GridManager>();
+
         for (int i = 0; i < grid.width; i++)
         {
             for (int j = 0; j < grid.height; j++)
             {
-                Casillas c = grid.GetCasilla(i, j);
-                if (c != null && c.controller == jugador)
+                if (grid.GetCasilla(i, j).controller == jugador)
                 {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    public void ActualizarColor()
+    {
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+
+        // color base del terreno
+        Color terrenoColor = Color.gray;
+        switch (TerritoryType)
+        {
+            case "Desert": terrenoColor = new Color(1f, 0.9f, 0.6f); break;
+            case "Oasis": terrenoColor = Color.green; break;
+            case "Plain": terrenoColor = Color.yellow; break;
+        }
+
+        // color del jugador
+        Color jugadorColor = Color.white;
+        switch (controller)
+        {
+            case ControllerManager.Controller.Player1: jugadorColor = Color.blue; break;
+            case ControllerManager.Controller.Player2: jugadorColor = Color.red; break;
+            case ControllerManager.Controller.None: jugadorColor = Color.white; break;
+        }
+
+        // mezcla terreno + jugador
+        Color finalColor = terrenoColor;
+        if (controller != ControllerManager.Controller.None)
+        {
+            finalColor = Color.Lerp(terrenoColor, jugadorColor, 0.5f);
+        }
+
+        spriteRenderer.color = finalColor;
     }
 }
